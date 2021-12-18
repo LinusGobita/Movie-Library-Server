@@ -1,7 +1,7 @@
 // import the express dependency
 const express = require('express');
+const bodyParser = require('body-parser');
 const mongodb = require("mongodb");
-const bodyParser = require("express");
 
 // create express app
 const app = express();
@@ -20,88 +20,60 @@ let collection = undefined;
  * Setup express middleware
  */
 app.use(bodyParser.json());
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     next();
 });
 
-
-// handle GET request on route '/'
-app.get('/', (req, res) => {
-    res.send('Hello World!');
+/**
+ * Connect to database
+ */
+MongoClient.connect(url, function (err, connection) {
+    if (err) throw err;
+    db = connection.db(dbName);
+    collection = db.collection(collectionName);
 });
 
 
 /**
- * Connect to database
+ * Return all favourites Movies
  */
-MongoClient.connect(url,function (err, connection) {
-    if (err) throw err;
-    let db = connection.db(dbName);
-    /*
-    db.createCollection(collectionName, function (err, res){
+app.get('/movies', (req, res) => {
+    collection.find({}).toArray(function (err, result) {
         if (err) throw err;
-        console.log("collection createt!")
-    })
-
-     */
+        //console.log(result);
+        res.send(result)
+    });
 });
-
 
 /**
  * Insert one Movie
  */
-/*
 app.post('/movie', (req, res) => {
-    console.log(req)
+    console.log("POT movie with ID " + req.body.id)
     const movie = req.body;
-    collection.insertOne(movie, function(err, result) {
+    collection.insertOne(movie, function (err, result) {
         if (err) throw err;
-        res.send({result: 'movie inserted', movie: movie});
     });
 });
 
- */
-
-app.post('/movie', function (req, res){
-    console.log("/movie "+req.body)
-    MongoClient.connect(url, function (err, connection){
-    if (err) throw err;
-    let dbo = connection.db(dbName);
-    const movie = req.body;
-    dbo.collection(collectionName).insertOne(movie, function (err, result){
-        if (err) throw err;
-        console.log("1 Move add")
-        res.send({result: 'movie inserted', movie: movie});
-        connection.close();
-    })
-    })
-})
-
 /**
- * get all Movies
+ * Delete one Movie by id
  */
-app.get('/movies', (req, res) => {
-    MongoClient.connect(url, function (err, connection){
+app.delete('/dmovie/:id', (req, res) => {
+    console.log("DELETE movie with ID " + req.params.id)
+    const query = { _id: new mongodb.ObjectID((req.params.id)) };
+    collection.deleteOne(query, function (err, obj) {
         if (err) throw err;
-        let dbo = connection.db(dbName);
-        dbo.collection(collectionName).find({}).toArray(function (err, result){
-            if (err) throw err;
-            //console.log(result);
-            res.send(result)
-            connection.close();
-        })
-    })
-});
-
+    });
+})
 
 
 /**
  * start server
  */
-
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
 });
