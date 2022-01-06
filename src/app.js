@@ -16,6 +16,8 @@ const collectionName = 'favourite';
 let db = undefined;
 let collection = undefined;
 
+//Start server node src/app.js
+
 /**
  * Setup express middleware
  */
